@@ -1,6 +1,6 @@
-#linux.sh
+# linux.sh
 
-##linux.sh is a program and domain that allow you to upload and encrypt small files, like config files for later downloading, Think of it as web cp file file.back They are stored for 24 hours
+## linux.sh is a program and domain that allow you to upload and encrypt small files, like config files for later downloading, Think of it as web cp file file.back They are stored for 24 hours
 
 [linux.sh](https://linux.sh)
 
