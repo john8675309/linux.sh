@@ -4,7 +4,7 @@
 
 [linux.sh](https://linux.sh)
 
-![Alt Text](https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif)
+![Demo](https://github.com/john8675309/linux.sh/raw/master/img/linux_sh.gif)
 
 
 In order to use AES encryption you have to install pyaes and pyscrypt
