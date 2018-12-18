@@ -43,13 +43,16 @@ parser.add_argument("--download", help="Download a file")
 args = parser.parse_args()
 
 if args.upload:
+	#get the filesize
+	if os.path.getsize(args.upload) > 10485760:
+		print("File Size is too large, limit is 10MB")
+		quit()
 	home = expanduser("~")
 	ufile = args.upload
 	encrypt_file=""
 	upload_filename = os.path.basename(args.upload)
 	encrypted=0
 	if args.encrypt:
-		bufferSize = 64 * 1024
 		pass1 = getpass.getpass("Enter Password: ")
 		pass2 = getpass.getpass("Reenter Password: ")
 		if (pass1 != pass2):
@@ -75,6 +78,9 @@ if args.upload:
 		encrypt_file=ufile
 		encrypted=1
 	response = requests.post('https://linux.sh/upload.php', files={'file': (upload_filename, open(ufile, 'rb'), 'application/octet-stream', {'Expires': '0'})})
+	if response.status_code != 200:
+		print("Error Uploading File")
+		quit()
 	parsed_json = json.loads(response.content)
 	print ("File Uploaded")
 	print ("Original Filename: %s" % (parsed_json['filename']['OriginalFileName']))

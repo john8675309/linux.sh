@@ -20,9 +20,15 @@ filename,uploadfilename,expires,filecontrol,encrypted
 
 **Don't confuse yourself, while the file on the server is encrypted by default, the keys are avalible on the same server!!! you should always --encrypt when you upload!!**
 
+python2:
 ```
-pip install pyaes
-pip install pyscript
+pip2 install pyaes
+pip2 install pyscript
+```
+or python3:
+```
+pip3 install pyaes
+pip3 install pyscript
 ```
 
 Commands:
