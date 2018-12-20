@@ -61,3 +61,11 @@ Download the file **Caution this WILL overwrite any file with the original filen
 ```
 linux.sh --download <uploadfilename>
 ```
+
+For Tor assuming you have the client installed:
+```
+sudo pip2 install pysocks
+sudo pip3 install pysocks
+```
+
+The software assumes that tor is running on 127.0.0.1:9050
