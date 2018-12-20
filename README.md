@@ -59,8 +59,5 @@ linux.sh --rm <uploadfilename>
 
 Download the file **Caution this WILL overwrite any file with the original filename**:
 ```
-linux.sh --download
+linux.sh --download <uploadfilename>
 ```
-
-
-
