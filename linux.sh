@@ -3,6 +3,7 @@ import argparse
 import requests
 import json
 import os
+import base64
 from os.path import expanduser
 import csv
 #https://github.com/ricmoo/pyaes
@@ -18,18 +19,21 @@ def cleanupFileList():
 	home = expanduser("~")
 	file = home + "/.linux.sh"
 	lines=""
-	with open(file, 'rt') as csvfile:
-		csvreader = csv.reader(csvfile)
-		for row in csvreader:
-			expires = row[2]
-			expires = datetime.strptime(expires,"%Y-%m-%d %H:%M:%S")
-			if now > expires:
-				print("File Expired: %s" % (row[1]))
-			else:
-				linux_sh_file = '"%s","%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3],row[4])
-				lines = lines + linux_sh_file
-	file = open(file,"w");
-	file.write(lines)
+	try:
+		with open(file, 'rt') as csvfile:
+			csvreader = csv.reader(csvfile)
+			for row in csvreader:
+				expires = row[2]
+				expires = datetime.strptime(expires,"%Y-%m-%d %H:%M:%S")
+				if now > expires:
+					print("File Expired: %s" % (row[1]))
+				else:
+					linux_sh_file = '"%s","%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3],row[4])
+					lines = lines + linux_sh_file
+		file = open(file,"w");
+		file.write(lines)
+	except:
+		print("No .linux.sh script")
 
 
 parser = argparse.ArgumentParser(description='Send some files to Linux.sh for safe keeping')
@@ -41,12 +45,51 @@ parser.add_argument("--meta", help="Fetch File Metadata (json Returned)")
 parser.add_argument("--rm", help="Remove a File")
 parser.add_argument("--download", help="Download a file")
 parser.add_argument("--tor", action="store_true",help="Use Tor Proxy, See README.md",default=False);
+parser.add_argument("--exportshare", help="Get A Filesharing code");
+parser.add_argument("--importshare", help="Import A File Sharing Code");
+parser.add_argument("--socksport", help="Socks Port For TOR Or Whatever (default 9050)");
+parser.add_argument("--socksip", help="Socks IP Address (default 127.0.0.1)");
 args = parser.parse_args()
 proxies = {}
 base_url="https://linux.sh/"
+socksport=9050
+socksip="127.0.0.1"
+
+if args.socksip:
+	socksip=args.socksip
+
+if args.socksport:
+	socksport=args.socksport
+
 if args.tor:
-	proxies={'http':'socks5h://127.0.0.1:9050'}
+	proxies={'http':'socks5h://'+socksip+':'+socksport}
 	base_url="http://7b42twezybs23hrr.onion/"
+
+if args.exportshare:
+	cleanupFileList()
+	home = expanduser("~")
+	file = home + "/.linux.sh"
+	with open(file, 'rt') as csvfile:
+		csvreader = csv.reader(csvfile)
+		for row in csvreader:
+			if row[1] == args.exportshare:
+				response = requests.post(base_url+'share.php',proxies=proxies,data={'filename':args.exportshare,'control':row[3],'encrypted':row[4]})
+				parsed_json = json.loads(response.content)
+				print ("Share Name: %s" % (parsed_json['share']))
+				found=True
+	if not found:
+		print("File Not Found")
+
+if args.importshare:
+	cleanupFileList()
+	home = expanduser("~")
+	file = home + "/.linux.sh"
+	base64 = base64.b64decode(args.importshare)
+	line = base64.decode("utf-8")
+	f = open(file, 'ab')
+	f.write(line.encode())
+	f.write("\r\n".encode())
+	cleanupFileList()
 
 if args.upload:
 	if os.path.getsize(args.upload) > 10485760:
@@ -148,7 +191,7 @@ if args.rm:
 			csvreader = csv.reader(csvfile)
 			for row in csvreader:
 				if row[1] == args.rm:
-					response = requests.post(base_url+'rm.php',data={'filename':args.rm,'control':row[3]})
+					response = requests.post(base_url+'rm.php',proxies=proxies,data={'filename':args.rm,'control':row[3]})
 					found=True
 		if not found:
 			print("File Not Found")
@@ -157,7 +200,7 @@ if args.rm:
 				csvreader = csv.reader(csvfile)
 				for row in csvreader:
 					if row[1] != args.rm:
-						linux_sh_file = '"%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3])
+						linux_sh_file = '"%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3],row[4])
 						lines = lines + linux_sh_file
 
 			file = open(file,"w");
@@ -171,6 +214,7 @@ if args.download:
 	found = False
 	content = ""
 	password = ""
+	encrypted = 0
 	try:
 		with open(file, 'rt') as csvfile:
 			csvreader = csv.reader(csvfile)
@@ -179,20 +223,25 @@ if args.download:
 					filename = row[0]
 					if str(row[4]) == "1":
 						password=getpass.getpass("Enter File Encryption Password: ")
+						encrypted=1
 
 		with open(file, 'rt') as csvfile:
 			csvreader = csv.reader(csvfile)
 			for row in csvreader:
 				if row[1] == args.download:
-					response = requests.post(base_url+'download.php',data={'filename':args.download,'control':row[3]})
-					salt=b":&\WRdDv6'MvK{8C"
-					N = 1024
-					r = 1
-					p = 1
-					key_32 = pyscrypt.hash(password.encode(), salt, N, r, p, 32)
-					mode = pyaes.AESModeOfOperationCTR(key_32)
+					response = requests.post(base_url+'download.php',proxies=proxies, data={'filename':args.download,'control':row[3]})
+					if encrypted:
+						salt=b":&\WRdDv6'MvK{8C"
+						N = 1024
+						r = 1
+						p = 1
+						key_32 = pyscrypt.hash(password.encode(), salt, N, r, p, 32)
+						mode = pyaes.AESModeOfOperationCTR(key_32)
 
-					content = mode.decrypt(response.content)
+						content = mode.decrypt(response.content)
+					else:
+						content = response.content
+
 					file = open(filename,'wb')
 					file.write(content)
 					found=True

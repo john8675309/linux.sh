@@ -62,6 +62,18 @@ Download the file **Caution this WILL overwrite any file with the original filen
 linux.sh --download <uploadfilename>
 ```
 
+Share the file (Returns base64 to share with other people):
+```
+linux.sh --exportshare <uploadfilename>
+```
+
+Import the share
+```
+linux.sh --importshare <base64 from exportshare>
+```
+When you share a file the 24 hour clock does not reset and the person ONLY has the ability to download the file. --rm is non destructive to the remote file
+
+
 For Tor assuming you have the client installed:
 ```
 sudo pip2 install pysocks
