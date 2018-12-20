@@ -69,3 +69,8 @@ sudo pip3 install pysocks
 ```
 
 The software assumes that tor is running on 127.0.0.1:9050
+
+Usage is just adding the --tor argument
+```
+linux.sh --upload <file> --encrypt --tor
+```

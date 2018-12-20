@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 import argparse
 import requests
 import json
@@ -40,10 +40,15 @@ parser.add_argument("--encrypt", action="store_true",help="Perform Local File En
 parser.add_argument("--meta", help="Fetch File Metadata (json Returned)")
 parser.add_argument("--rm", help="Remove a File")
 parser.add_argument("--download", help="Download a file")
+parser.add_argument("--tor", action="store_true",help="Use Tor Proxy, See README.md",default=False);
 args = parser.parse_args()
+proxies = {}
+base_url="https://linux.sh/"
+if args.tor:
+	proxies={'http':'socks5h://127.0.0.1:9050'}
+	base_url="http://7b42twezybs23hrr.onion/"
 
 if args.upload:
-	#get the filesize
 	if os.path.getsize(args.upload) > 10485760:
 		print("File Size is too large, limit is 10MB")
 		quit()
@@ -58,8 +63,9 @@ if args.upload:
 		if (pass1 != pass2):
 			print("Password Mismatch")
 			quit()
-		key = pass1
-		salt=":&\WRdDv6'MvK{8C"
+		key = pass1.encode()
+		#key = b"1234"
+		salt= b":&\WRdDv6'MvK{8C"
 		N = 1024
 		r = 1
 		p = 1
@@ -67,9 +73,9 @@ if args.upload:
 		mode = pyaes.AESModeOfOperationCTR(key_32)
 		filename_w_ext = os.path.basename(ufile)
 		ufile = home + "/" + filename_w_ext + ".aes"
-
-		file_in = file(args.upload)
-		file_out = file(ufile, 'wb')
+		print(args.upload)
+		file_in = open(args.upload,'rb')
+		file_out = open(ufile, 'wb')
 		print("Encrypting File: %s This will take awhile if the file is big"%(args.upload))
 		pyaes.encrypt_stream(mode, file_in, file_out)
 		print("Uploading File: %s "%(args.upload))
@@ -77,7 +83,7 @@ if args.upload:
 		file_out.close()
 		encrypt_file=ufile
 		encrypted=1
-	response = requests.post('https://linux.sh/upload.php', files={'file': (upload_filename, open(ufile, 'rb'), 'application/octet-stream', {'Expires': '0'})})
+	response = requests.post(base_url+'upload.php', proxies=proxies, files={'file': (upload_filename, open(ufile, 'rb'), 'application/octet-stream', {'Expires': '0'})})
 	if response.status_code != 200:
 		print("Error Uploading File")
 		quit()
@@ -122,7 +128,7 @@ if args.meta:
 			csvreader = csv.reader(csvfile)
 			for row in csvreader:
 				if row[1] == args.meta:
-					response = requests.post('https://linux.sh/meta.php',data={'filename':args.meta,'control':row[3]})
+					response = requests.post(base_url+'meta.php',proxies=proxies,data={'filename':args.meta,'control':row[3]})
 					print(response.content)
 					found=True
 		if not found:
@@ -142,7 +148,7 @@ if args.rm:
 			csvreader = csv.reader(csvfile)
 			for row in csvreader:
 				if row[1] == args.rm:
-					response = requests.post('https://linux.sh/rm.php',data={'filename':args.rm,'control':row[3]})
+					response = requests.post(base_url+'rm.php',data={'filename':args.rm,'control':row[3]})
 					found=True
 		if not found:
 			print("File Not Found")
@@ -178,13 +184,13 @@ if args.download:
 			csvreader = csv.reader(csvfile)
 			for row in csvreader:
 				if row[1] == args.download:
-					response = requests.post('https://linux.sh/download.php',data={'filename':args.download,'control':row[3]})
-			                salt=":&\WRdDv6'MvK{8C"
-			                N = 1024
-			                r = 1
-			                p = 1
-			                key_32 = pyscrypt.hash(password, salt, N, r, p, 32)
-			                mode = pyaes.AESModeOfOperationCTR(key_32)
+					response = requests.post(base_url+'download.php',data={'filename':args.download,'control':row[3]})
+					salt=b":&\WRdDv6'MvK{8C"
+					N = 1024
+					r = 1
+					p = 1
+					key_32 = pyscrypt.hash(password.encode(), salt, N, r, p, 32)
+					mode = pyaes.AESModeOfOperationCTR(key_32)
 
 					content = mode.decrypt(response.content)
 					file = open(filename,'wb')
