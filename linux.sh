@@ -28,7 +28,7 @@ def cleanupFileList():
 				if now > expires:
 					print("File Expired: %s" % (row[1]))
 				else:
-					linux_sh_file = '"%s","%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3],row[4])
+					linux_sh_file = '"%s","%s","%s","%s","%s"\n'%(row[0],row[1],row[2],row[3],row[4])
 					lines = lines + linux_sh_file
 		file = open(file,"w");
 		file.write(lines)
@@ -88,7 +88,7 @@ if args.importshare:
 	line = base64.decode("utf-8")
 	f = open(file, 'ab')
 	f.write(line.encode())
-	f.write("\r\n".encode())
+	f.write("\n".encode())
 	cleanupFileList()
 
 if args.upload:
@@ -139,7 +139,7 @@ if args.upload:
 	print ("File Hash After Upload: %s" % (parsed_json['filename']['UploadHashAfterEncryption']))
 	home = expanduser("~")
 	file = home + "/.linux.sh"
-	linux_sh_file = '"%s","%s","%s","%s","%s"\r\n'%(parsed_json['filename']['OriginalFileName'],parsed_json['filename']['UploadFilename'],parsed_json['filename']['UploadExpires'],parsed_json['filename']['UploadControlKey'],encrypted)
+	linux_sh_file = '"%s","%s","%s","%s","%s"\n'%(parsed_json['filename']['OriginalFileName'],parsed_json['filename']['UploadFilename'],parsed_json['filename']['UploadExpires'],parsed_json['filename']['UploadControlKey'],encrypted)
 	if encrypt_file != "":
 		os.remove(encrypt_file)
 	try:
@@ -200,7 +200,7 @@ if args.rm:
 				csvreader = csv.reader(csvfile)
 				for row in csvreader:
 					if row[1] != args.rm:
-						linux_sh_file = '"%s","%s","%s","%s"\r\n'%(row[0],row[1],row[2],row[3],row[4])
+						linux_sh_file = '"%s","%s","%s","%s"\n'%(row[0],row[1],row[2],row[3],row[4])
 						lines = lines + linux_sh_file
 
 			file = open(file,"w");
